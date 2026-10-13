@@ -1,0 +1,22 @@
+### Poprawny POST z JSON-em (zwróci 200 OK)
+POST http://localhost:5050/Book/Import
+Content-Type: application/json
+
+{
+  "title": "Solaris",
+  "isbn": "9788308065341",
+  "price": 39.9
+}
+
+### Pytanie 4 z instrukcji: Zły Content-Type (zwróci 415 Unsupported Media Type)
+POST http://localhost:5050/Book/Import
+Content-Type: text/plain
+
+{ 
+  "title": "Solaris", 
+  "isbn": "9788308065341", 
+  "price": 39.9 
+}
+
+### Pytanie 5 z instrukcji: Zła metoda GET (zwróci 405 Method Not Allowed)
+GET http://localhost:5050/Book/Import
