@@ -3,19 +3,29 @@
 
 
 <h2>Lista Książek</h2>
-<a class="btn btn-primary" asp-action="Create" asp-controller="Book"> Dodaj Książkę </a>
+
+<a class="btn btn-primary mb-3" asp-action="Create" asp-controller="Book"> Dodaj Książkę </a>
 
 <table class="table">
     <thead>
-        <tr>
-            <th>Tytuł</th>
-            <th>Cena</th>
-        </tr>
+    <tr>
+        <th>Tytuł</th>
+        <th>Autor</th>
+        <th>Rok</th>
+        <th>Cena</th>
+    </tr>
     </thead>
     <tbody>
-        @foreach (var book in Model)
-        {
-           <partial model=@book name=_BookRow/>
-        }
+    @foreach (var book in Model)
+    {
+        <partial model="@book" name="_BookRow" />
+    }
     </tbody>
 </table>
+
+
+@section Scripts {
+    <script>
+        console.log("Skrypt z widoku Index załadował się pomyślnie.");
+    </script>
+}
