@@ -1,35 +1,56 @@
-namespace LabA1;
+using LabA1.Middlewares; 
 
-public class Program
+var builder = WebApplication.CreateBuilder(args);
+
+// Add services to the container.
+builder.Services.AddControllersWithViews();
+
+
+builder.Services.AddSingleton<RequestStats>();
+
+var app = builder.Build();
+
+
+if (!app.Environment.IsDevelopment())
 {
-    public static void Main(string[] args)
-    {
-        var builder = WebApplication.CreateBuilder(args);
-
-        // Add services to the container.
-        builder.Services.AddControllersWithViews();
-
-        var app = builder.Build();
-
-        // Configure the HTTP request pipeline.
-        if (!app.Environment.IsDevelopment())
-        {
-            app.UseExceptionHandler("/Home/Error");
-            // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-            app.UseHsts();
-        }
-
-        app.UseHttpsRedirection();
-        app.UseRouting();
-
-        app.UseAuthorization();
-
-        app.MapStaticAssets();
-        app.MapControllerRoute(
-                name: "default",
-                pattern: "{controller=Home}/{action=Index}/{id?}")
-            .WithStaticAssets();
-
-        app.Run();
-    }
+    app.UseExceptionHandler("/Home/Error");
+    app.UseHsts();
 }
+
+
+app.UseMiddleware<RequestTimingMiddleware>();
+
+app.UseHttpsRedirection();
+app.UseStaticFiles();
+
+app.UseRouting();
+
+app.UseAuthorization();
+
+
+app.MapControllerRoute(
+    name: "admin-area",
+    pattern: "{area:exists}/{controller=Dashboard}/{action=Index}/{id?}");
+
+
+app.MapControllerRoute(
+    name: "books-by-year", 
+    pattern: "books/year/{year:int:min(1450)}",
+    defaults: new { controller = "Book", action = "ByYear" });
+
+app.MapControllerRoute(
+    name: "books-by-isbn", 
+    pattern: "books/isbn/{isbn:regex(^\\d{{13}}$)}",
+    defaults: new { controller = "Book", action = "ByIsbn" });
+
+app.MapControllerRoute(
+    name: "docs", 
+    pattern: "docs/{*path}",
+    defaults: new { controller = "Home", action = "Docs" });
+
+
+app.MapControllerRoute(
+    name: "default",
+    pattern: "{controller=Home}/{action=Index}/{id?}");
+
+app.Run();

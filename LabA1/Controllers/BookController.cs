@@ -12,6 +12,7 @@ public class BookController : Controller
     public IActionResult Status(int code = 200) => StatusCode(code);
 
 
+    [HttpGet("Book/Details/{id:int}")]
     public IActionResult Details(int id)
     {
         ViewBag.Id = id;
@@ -87,7 +88,29 @@ public class BookController : Controller
             Isbn = model.Isbn,
             PublicationDate = model.PublicationDate,
         });
-        TempData["Success"] = $"Dodano książkę „{model.Title}”."; 
+        TempData["Success"] = $"Dodano książkę „{model.Title}”.";
         return RedirectToAction(nameof(Index));
+    }
+
+
+    [HttpGet("Book/Details/{id:int}")]
+    public IActionResult Details(int id)
+    {
+        ViewBag.Id = id;
+        return View();
+    }
+
+
+    public IActionResult ByYear(int year)
+    {
+        var filteredBooks = BookStoreMemory.Books.Where(b => b.PublicationDate?.Year == year).ToList();
+        return View("Index", filteredBooks);
+    }
+
+    public IActionResult ByIsbn(string isbn)
+    {
+        var book = BookStoreMemory.Books.FirstOrDefault(b => b.Isbn.Replace("-","") == isbn || b.Isbn == isbn);
+        if (book == null) return NotFound();
+        return RedirectToAction(nameof(Details), new { id = book.Id });
     }
 }
