@@ -1,9 +1,11 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Text;
+using LabA1.Filters;
 using LabA1.Models;
 
 namespace LabA1.Controllers;
 
+[ServiceFilter(typeof(LogActionFilter))]
 public class BookController : Controller
 {
     public IActionResult Hello() => Content("Witaj w BookStore!", "text/plain; charset=utf-8");
@@ -92,13 +94,13 @@ public class BookController : Controller
         return RedirectToAction(nameof(Index));
     }
 
-
-    [HttpGet("Book/Details/{id:int}")]
-    public IActionResult Details(int id)
-    {
-        ViewBag.Id = id;
-        return View();
-    }
+    //
+    // [HttpGet("Book/Details/{id:int}")]
+    // public IActionResult Details(int id)
+    // {
+    //     ViewBag.Id = id;
+    //     return View();
+    // }
 
 
     public IActionResult ByYear(int year)
@@ -112,5 +114,11 @@ public class BookController : Controller
         var book = BookStoreMemory.Books.FirstOrDefault(b => b.Isbn.Replace("-","") == isbn || b.Isbn == isbn);
         if (book == null) return NotFound();
         return RedirectToAction(nameof(Details), new { id = book.Id });
+    }
+    [MeasureTime] 
+    public IActionResult Archive(int year, int month)
+    {
+        var books = BookStoreMemory.Books.Where(b => b.PublicationDate?.Year == year).ToList();
+        return View("Index", books);
     }
 }

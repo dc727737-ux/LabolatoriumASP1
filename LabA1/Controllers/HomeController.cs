@@ -18,85 +18,54 @@ public class HomeController : Controller
     {
         return View();
     }
-
     public IActionResult Docs(string? path)
     {
-        return Content($"Przechwycona ścieżka: {path ?? string.Empty}");
+        return Content($"Jesteś w dziale dokumentacji. Ścieżka: {path}");
     }
 
     public IActionResult Routes([FromServices] IActionDescriptorCollectionProvider provider)
     {
-        var routes = provider.ActionDescriptors.Items
+        var rows = provider.ActionDescriptors.Items
             .OfType<ControllerActionDescriptor>()
-            .Select(descriptor =>
+            .Select(r =>
             {
-                var area = descriptor.RouteValues.TryGetValue("area", out var areaName) ? areaName : null;
-                var methods = descriptor.ActionConstraints?
-                    .OfType<HttpMethodActionConstraint>()
-                    .SelectMany(constraint => constraint.HttpMethods)
-                    .Distinct()
-                    .ToArray();
+                var methodsList = r.ActionConstraints?.OfType<HttpMethodActionConstraint>()
+                    .SelectMany(c => c.HttpMethods)
+                    .ToList();
 
                 return new RouteInfo
                 {
-                    Pattern = GetRoutePattern(descriptor, area),
-                    Controller = descriptor.ControllerName,
-                    Action = descriptor.ActionName,
-                    Area = area,
-                    Methods = methods is { Length: > 0 } ? string.Join(", ", methods) : "*"
+              
+                    Pattern = "/" + (r.AttributeRouteInfo?.Template ?? "Konwencja"),
+                    Action = r.ActionName,
+                    Controller = r.ControllerName,
+
+                    Methods = (methodsList != null && methodsList.Any()) 
+                        ? string.Join(", ", methodsList) 
+                        : "*",
+                    Area = r.RouteValues.TryGetValue("area", out var area) ? area : null
                 };
             })
-            .OrderBy(route => route.Pattern)
-            .ThenBy(route => route.Controller)
-            .ThenBy(route => route.Action)
             .ToList();
 
-        return View(routes);
+   
+        return View(rows);
     }
 
-    private static string GetRoutePattern(ControllerActionDescriptor descriptor, string? area)
-    {
-        if (descriptor.AttributeRouteInfo?.Template is { } attributeRoute)
-        {
-            return $"/{attributeRoute}";
-        }
+    public IActionResult Boom() => throw new InvalidOperationException("Celowy wyjątek");
 
-        return (descriptor.ControllerName, descriptor.ActionName) switch
-        {
-            ("Book", "ByYear") => "/books/year/{year:int:min(1450)}",
-            ("Book", "ByIsbn") => "/books/isbn/{isbn:regex(^\\d{{13}}$)}",
-            ("Home", "Docs") => "/docs/{*path}",
-            _ when area is not null => $"/{area}/{{controller=Dashboard}}/{{action=Index}}/{{id?}}",
-            _ => "/{controller=Home}/{action=Index}/{id?}"
-        };
+    public IActionResult HttpStatus(int code)
+    {
+        Response.StatusCode = code;
+        ViewBag.Code = code;
+        return View();
     }
 
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
     public IActionResult Error()
     {
-        return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+        return View();
     }
-    using Microsoft.AspNetCore.Mvc.Infrastructure; 
-        public IActionResult Docs(string? path)
-        {
-            return Content($"Jesteś w dziale dokumentacji. Ścieżka: {path}");
-        }
     
-   
-        public IActionResult Routes([FromServices] IActionDescriptorCollectionProvider provider)
-        {
-            var sb = new System.Text.StringBuilder();
-            sb.AppendLine("Wklej to do pliku lab3.md:\n");
-            sb.AppendLine("| Adres (Template) | Kontroler.Akcja | Metoda HTTP |");
-            sb.AppendLine("|---|---|---|");
-            
-            foreach (var route in provider.ActionDescriptors.Items)
-            {
-                var template = route.AttributeRouteInfo?.Template ?? "Konwencjonalna";
-                var controller = route.RouteValues["controller"];
-                var action = route.RouteValues["action"];
-                sb.AppendLine($"| {template} | {controller}.{action} | ANY/GET/POST |");
-            }
-            return Content(sb.ToString(), "text/plain; charset=utf-8");
-        }
 }
+   
